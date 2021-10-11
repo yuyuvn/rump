@@ -24,11 +24,10 @@ func exit(e error) {
 	os.Exit(1)
 }
 
-func authConn(authPass string) radix.ConnFunc {
+func tlsConn() radix.ConnFunc {
 	return func(network, address string) (radix.Conn, error) {
 		return radix.Dial(network, address,
 			radix.DialTimeout(1*time.Minute),
-			radix.DialAuthPass(authPass),
 			radix.DialUseTLS(&tls.Config{}),
 		)
 	}
@@ -53,8 +52,8 @@ func Run(cfg config.Config) {
 		var db *radix.Pool
 		var err error
 
-		if len(cfg.Source.Auth) > 0 {
-			db, err = radix.NewPool("tcp", cfg.Source.URI, 1, radix.PoolConnFunc(authConn(cfg.Source.Auth)))
+		if cfg.Source.TLS {
+			db, err = radix.NewPool("tcp", cfg.Source.URI, 1, radix.PoolConnFunc(tlsConn()))
 
 			if err != nil {
 				exit(err)
@@ -85,8 +84,8 @@ func Run(cfg config.Config) {
 		var db *radix.Pool
 		var err error
 
-		if len(cfg.Target.Auth) > 0 {
-			db, err = radix.NewPool("tcp", cfg.Target.URI, 1, radix.PoolConnFunc(authConn(cfg.Target.Auth)))
+		if cfg.Source.TLS {
+			db, err = radix.NewPool("tcp", cfg.Target.URI, 1, radix.PoolConnFunc(tlsConn()))
 
 			if err != nil {
 				exit(err)

@@ -13,7 +13,7 @@ import (
 type Resource struct {
 	URI     string
 	IsRedis bool
-	Auth    string
+	TLS     bool
 }
 
 // Config represents the current source and target config.
@@ -37,26 +37,21 @@ func exit(e error) {
 
 // getRedisOptions makes sure provided string is Redis URI,
 // and return is redis or not and auth string if it's specified.
-func getRedisOptions(conn string) (bool, string, string) {
+func getRedisOptions(conn string) (bool, string, bool) {
 	var redisPrefix string = "redis://"
 	var redisTlsPrefix string = "rediss://"
-	var authSeparator string = "@"
 	var isRedis bool
-	var auth string
+	var useTLS bool = false
 	var uri string = conn
 
 	if strings.HasPrefix(conn, redisPrefix) {
 		isRedis = true
 	} else if strings.HasPrefix(conn, redisTlsPrefix) {
 		isRedis = true
-
-		if strings.Contains(conn, authSeparator) {
-			auth = strings.Split(strings.TrimPrefix(conn, redisTlsPrefix), authSeparator)[0]
-			uri = redisPrefix + strings.Split(conn, authSeparator)[1]
-		}
+		useTLS = true
 	}
 
-	return isRedis, uri, auth
+	return isRedis, uri, useTLS
 }
 
 // validate makes sure from and to are Redis URIs or file paths,
@@ -69,8 +64,8 @@ func validate(from, to string, silent, ttl bool) (Config, error) {
 		TTL:    ttl,
 	}
 
-	cfg.Source.IsRedis, cfg.Source.URI, cfg.Source.Auth = getRedisOptions(from)
-	cfg.Target.IsRedis, cfg.Target.URI, cfg.Target.Auth = getRedisOptions(to)
+	cfg.Source.IsRedis, cfg.Source.URI, cfg.Source.TLS = getRedisOptions(from)
+	cfg.Target.IsRedis, cfg.Target.URI, cfg.Target.TLS = getRedisOptions(to)
 
 	// Guard from incorrect usage.
 	switch {
