@@ -145,7 +145,9 @@ func (r *Redis) ReadKey(ctx context.Context) error {
 
 			err := r.Pool.Do(radix.Cmd(&value, "DUMP", key))
 			if err != nil {
-				return err
+				fmt.Println(err)
+				fmt.Println(key)
+				continue
 			}
 
 			ttl, err = r.maybeTTL(key)
